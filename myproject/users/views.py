@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import RegistrationForm
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt 
 
 
 def is_admin(user):
@@ -150,4 +150,42 @@ def admin_dashboard(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('login') 
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+from .models import GasServiceRequest
+from .forms import GasServiceRequestForm
+from django.views.decorators.http import require_http_methods
+
+@login_required
+@csrf_protect
+@require_http_methods(["GET", "POST"])
+def user_dashboard(request):
+    if request.method == 'POST':
+        # Print debug information
+        print("POST data:", request.POST)
+        print("CSRF token in session:", request.session.get('csrf_token'))
+        
+        form = GasServiceRequestForm(request.POST)
+        if form.is_valid():
+            gas_request = form.save(commit=False)
+            gas_request.user = request.user
+            gas_request.save()
+            return redirect('user_dashboard')
+        else:
+            # Print form errors for debugging
+            print("Form errors:", form.errors)
+    else:
+        form = GasServiceRequestForm()
+    
+    # Get user's recent requests
+    recent_requests = GasServiceRequest.objects.filter(user=request.user).order_by('-created_at')[:5]
+    
+    context = {
+        'form': form,
+        'recent_requests': recent_requests
+    }
+    return render(request, 'user_dashboard.html', context)
