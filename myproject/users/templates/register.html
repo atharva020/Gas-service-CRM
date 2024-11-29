@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register Page</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 350px;
+            text-align: center;
+        }
+        .register-container h2 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus {
+            border-color: #667eea;
+        }
+        .register-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .login-link, .admin-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: block;
+            margin-top: 15px;
+        }
+        .admin-link {
+            color: #333;
+            font-weight: bold;
+        }
+        .form-error {
+            color: red;
+            font-size: 0.8em;
+            margin-top: -15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Create Account</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <input 
+                        type="{{ field.field.widget.input_type }}" 
+                        name="{{ field.name }}" 
+                        placeholder="{{ field.label }}"
+                        {% if field.errors %}class="error"{% endif %}
+                        required
+                    >
+                    {% if field.errors %}
+                        <div class="form-error">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button class="register-btn" type="submit">Register</button>
+        </form>
+        <p>Already have an account? <a href="{% url 'login' %}" class="login-link">Login here</a></p>
+        <a href="{% url 'admin_dashboard' %}" class="admin-link">Admin Login</a>
+    </div>
+</body>
+</html>
