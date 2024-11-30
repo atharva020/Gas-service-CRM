@@ -1,48 +1,146 @@
 {% extends 'base.html' %}
-
 {% block content %}
+<style>
+    body {
+        background-color: #92ddd6;
+        font-family: 'Arial', sans-serif;
+    }
+    .dashboard-wrapper {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-top: 30px;
+    }
+    .request-form {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 25px;
+    }
+    .recent-requests-card {
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #e1e5eb;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8em;
+    }
+    /* Updated status badges to match your model's status choices */
+    .status-PENDING {
+        background-color: #ffc107;
+        color: white;
+    }
+    .status-IN_PROGRESS {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .status-RESOLVED {
+        background-color: #28a745;
+        color: white;
+    }
+    .status-CANCELLED {
+        background-color: #dc3545;
+        color: white;
+    }
+    .form-control {
+        border-radius: 6px;
+    }
+    .btn-submit {
+        background-color: #007bff;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+</style>
+
 <div class="container">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>File a New Gas Service Request</h2>
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    {{ form.request_type.label_tag }}
-                    {{ form.request_type }}
-                </div>
-                <div class="form-group">
-                    {{ form.description.label_tag }}
-                    {{ form.description }}
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Request</button>
-            </form>
-        </div>
-        <div class="col-md-4">
-            <h3>Recent Requests</h3>
-            {% if recent_requests %}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for request in recent_requests %}
-                        <tr>
-                            <td>{{ request.request_type }}</td>
-                            <td>{{ request.get_status_display }}</td>
-                            <td>{{ request.created_at|date:"d M Y" }}</td>
-                        </tr>
+    <div class="dashboard-wrapper">
+        <div class="row">
+            <div class="col-md-7 request-form">
+                <h2 class="mb-4 text-secondary">File New Gas Service Request</h2>
+                {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
                         {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No recent requests</p>
-            {% endif %}
+                    </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label class="form-label">Request Type</label>
+                        {{ form.request_type }}
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <button type="submit" class="btn btn-submit btn-primary w-100">Submit Request</button>
+                </form>
+            </div>
+            <div class="col-md-5 recent-requests-card p-3">
+                <h3 class="mb-4 text-secondary">Recent Requests</h3>
+                {% if recent_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in recent_requests %}
+                                <tr data-request-id="{{ request.id }}">
+                                    <td>{{ request.request_type }}</td>
+                                    <td class="status-cell">
+                                        <span class="status-badge status-{{ request.status }}">
+                                            {{ request.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.created_at|date:"d M Y" }}</td>
+                                    <td>{{ request.updated_at|date:"d M Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        No recent requests
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Add real-time updates -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+function updateRequestStatuses() {
+    $.get('/get-user-requests/', function(data) {
+        data.requests.forEach(function(request) {
+            const statusCell = $(`tr[data-request-id="${request.id}"] td.status-cell`);
+            statusCell.html(`
+                <span class="status-badge status-${request.status}">
+                    ${request.status_display}
+                </span>
+            `);
+            // Update the last updated time
+            $(`tr[data-request-id="${request.id}"] td:last`).text(request.updated_at);
+        });
+    });
+}
+
+</script>
 {% endblock %}

@@ -1,8 +1,171 @@
-<!DOCTYPE html>
-<html>
-<body>
-    <h2>Admin Dashboard</h2>
-    <p>Welcome, Admin {{ user.username }}!</p>
-    <a href="{% url 'logout' %}">Logout</a>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Admin Dashboard</h1>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Service Requests</h5>
+                    <div class="messages mb-3">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Request Type</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in service_requests %}
+                                <tr data-request-id="{{ request.id }}">
+                                    <td>{{ request.user.username }}</td>
+                                    <td>{{ request.request_type }}</td>
+                                    <td>{{ request.description }}</td>
+                                    <td class="status-cell">
+                                        <select class="form-control status-select">
+                                            {% for status_code, status_label in status_choices %}
+                                                <option value="{{ status_code }}" 
+                                                    {% if request.status == status_code %}selected{% endif %}>
+                                                    {{ status_label }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>{{ request.created_at|date:"d M Y" }}</td>
+                                    <td class="updated-at">{{ request.updated_at|date:"d M Y H:i" }}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm update-status-btn">
+                                            Update
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No service requests found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    const csrftoken = '{{ csrf_token }}';
+
+    $('.update-status-btn').click(function() {
+        const button = $(this);
+        const row = button.closest('tr');
+        const requestId = row.data('request-id');
+        const newStatus = row.find('.status-select').val();
+        
+        button.prop('disabled', true).text('Updating...');
+        
+        $.ajax({
+            url: `{% url 'update_request_status' 0 %}`.replace('0', requestId),
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            data: {
+                status: newStatus
+            },
+            success: function(response) {
+                $('.messages').html(
+                    '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                    'Status updated successfully!' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                    '</div>'
+                );
+                
+                row.find('.updated-at').text(response.updated_at);
+                button.prop('disabled', false).text('Update');
+                
+                row.addClass('table-success');
+                setTimeout(() => row.removeClass('table-success'), 1000);
+            },
+            error: function(xhr, status, error) {
+                $('.messages').html(
+                    '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                    'Error updating status. Please try again.' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                    '</div>'
+                );
+                button.prop('disabled', false).text('Update');
+            }
+        });
+    });
+
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+});
+</script>
+
+<style>
+    .status-select {
+        min-width: 120px;
+    }
+    .table-success {
+        transition: background-color 0.5s ease;
+    }
+    .alert {
+        margin-bottom: 1rem;
+    }
+    .table-responsive {
+        margin-top: 1rem;
+    }
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .btn-primary {
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        transform: translateY(-1px);
+    }
+    .status-cell {
+        min-width: 150px;
+    }
+    .description {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    thead th {
+        background-color: #f8f9fa;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
