@@ -33,7 +33,11 @@ A Django application designed to manage gas service requests efficiently. This p
 
 4. Apply the database migrations: `python manage.py migrate`.
 
-6. Start the Django development server: `python manage.py runserver`.
+5. Start the Django development server: `python manage.py runserver`.
+
+<img width="1439" alt="Screenshot 2024-11-30 at 8 36 23 PM" src="https://github.com/user-attachments/assets/15e5bf70-8346-460a-9f72-4ef85ee7ba6b">
+
+
 
 7. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the application.<img width="1438" alt="Screenshot 2024-11-30 at 8 22 24 PM" src="https://github.com/user-attachments/assets/cac54f8e-8ad1-4af8-ae43-ef5cf3d07077">
 
